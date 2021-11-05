@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 """
     Karaokê - by Clovis F Reis
 
@@ -5,8 +7,10 @@
     
     20 mar 2021
     
+    Utilize  python 3 ou superior
     
 """
+
 
 
 import PySimpleGUI as sg
@@ -21,7 +25,70 @@ import vlc
 from sys import platform as PLATFORM
 #pip install pytube
 from pytube import YouTube
+import hashlib as hl
 
+
+def checkPasswd(con):
+    passwd = sg.popup_get_text(title = 'Informe a senha',
+                               message = "Por favor, informe a senha de administrador",
+                               password_char = "*")
+    if db.checkPasswdDB(con, passwd, hl):
+        return(True)
+    else:
+        sg.Popup('Opps!', 'Senha Incorreta!', font=("Helvetica",18), keep_on_top=True)
+        return(False)
+
+
+def cleanDB(con):
+    erro = 0 
+    #lista de vídeos
+    path='./Musicas'
+    dest='./MusicasOut'
+    files = os.listdir(path)
+
+    fNames = sorted([tmp.lower().replace('.mp4','') for tmp in files])
+    
+    #lista de arquivos no DB
+    dbNames = db.getAllCodes(con)
+    dbNames = sorted([tmp[0] for tmp in dbNames])
+    
+    #cria string para select no banco    
+    extraDb = "'"+"','".join([tmp for tmp in set(dbNames).difference(fNames)])+"'"
+    
+    #cria lista de nome de arquivos    
+    extraFiles = [tmp+'.mp4' for tmp in set(fNames).difference(dbNames)]
+
+    if extraDb != "''":
+        #copia musicas a serem apagadas do DB para musicasOut
+        try:
+            db.insertmusicasOut(con, extraDb)
+        except:
+            erro = 1
+            return(erro)
+        #insert apaga do DB musicas
+        try:
+            db.deleteMusicasOut(con, extraDb)
+        except:
+            erro = 1
+            return(erro)
+
+    
+    #move musicas que não estão no DB
+    if not os.path.isdir(dest):
+        try:
+            os.makedirs(dest)
+        except:
+            erro = 1
+            return(erro)
+    
+    for music in extraFiles:
+        try:
+            sh.move(path+'/'+music,dest+'/'+music)
+        except:
+            erro = 1
+            return(erro)
+    return(erro)
+        
 
 def dwYTube(url):
     path = './download'
@@ -130,7 +197,13 @@ def make_window1(theme,data,dataFila,nome,titulo,cantor):
                           border_width=0, 
                           image_data=icons.filenew, 
                           key='new',
-                          tooltip='Inclui clipe na lista de músicas')],
+                          tooltip='Inclui clipe na lista de músicas'),
+               sg.Button('',
+                          button_color=(sg.theme_background_color(),sg.theme_background_color()), 
+                          border_width=0, 
+                          image_data=icons.wizard, 
+                          key='clean',
+                          tooltip='Realiza uma limpeza na base de dados')],
               [sg.Column(col1),sg.Column(col2)]] 
     
     location = (0,0)
@@ -478,6 +551,8 @@ def main():
                 #print('Faio!')
                 pass
         if event1 in (None, 'exit'):
+            if not checkPasswd(con):
+                continue
             ret=sg.popup_yes_no('Você está prestes a encerrar esta aplicação!\n\nDeseja continuar?\n',title='Sair',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
             if ret == 'Yes':
                 process = subprocess.Popen("pkill mplayer; sleep 2" , shell=True, stdout=subprocess.PIPE)
@@ -525,6 +600,8 @@ def main():
             else:
                 continue
         elif event1 == 'trash': 
+            if not checkPasswd(con):
+                continue
             nome=values1['nome']
             titulo=values1['titulo']
             cantor=values1['cantor']
@@ -538,7 +615,27 @@ def main():
                     updateWindow1(windowConsulta, con, nome, titulo, cantor)
             else:
                 continue
+        elif event1 == 'clean': 
+            if not checkPasswd(con):
+                continue
+            ret=sg.popup_yes_no('Esta ação realizará uma limpeza no banco de dados e arquivos de vídeo, tornando-os consistentes!\nToda fila atual será removida\n\nDeseja continuar?\n',title='Confirmar limpeza',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
+            if ret == 'Yes':
+                ret=sg.popup_yes_no('Não queremos uma multidão enfurecida aqui!\n\n Esta ação não pode ser desfeita!!!\n\nTem certeza que deseja excluir a fila toda?\n',title='Confirmar exclusão da fila',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
+                if ret == 'Yes':
+                    db.removeFila(con)
+                    process = subprocess.Popen("pkill mplayer; sleep 2" , shell=True, stdout=subprocess.PIPE)
+                    process.wait()
+                    erro = cleanDB(con)
+                    if erro == 1:
+                        sg.Popup('Opps!', 'Ocorreram erros durante a limpeza!', font=("Helvetica",18), keep_on_top=True)
+                    elif erro ==0:
+                        sg.Popup('Limpeza realizada com sucesso!', font=("Helvetica",18), keep_on_top=True)
+                    updateWindow1(windowConsulta, con, '', '', '')
+            else:
+                continue
         elif event1 == 'new':
+            if not checkPasswd(con):
+                continue
             nome=values1['nome']
             titulo=values1['titulo']
             cantor=values1['cantor']

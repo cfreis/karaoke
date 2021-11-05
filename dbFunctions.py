@@ -1,3 +1,37 @@
+def checkPasswdDB(con, passwd, hl):
+    pHash1 = hl.sha224(passwd.encode('utf-8')).hexdigest()
+    cur = con.cursor()
+    sql = "SELECT passwd from administration where name = 'admin'"
+    cur.execute(sql)
+    pHash2=cur.fetchall()[0][0]
+    cur.close()
+    return(pHash1 == pHash2)
+
+
+
+def insertMusicasOut(con, values):
+    cur = con.cursor()
+    sql='INSERT INTO musicasOut select * from musicas where codigo in ('+ values + ');'
+    print(sql)
+    cur.execute(sql)
+    con.commit()
+    
+def deleteMusicasOut(con, values):
+    cur = con.cursor()
+    sql='DELETE FROM musicas where codigo in ('+ values + ');'
+    print(sql)
+    cur.execute(sql)
+    con.commit()
+
+
+def getAllCodes(con):
+    cur = con.cursor()
+    sql = 'SELECT codigo from musicas'
+    cur.execute(sql)
+    data=cur.fetchall()
+    cur.close()
+    return(data)
+
 def removeFila(con):
     cur = con.cursor()
     cur.execute('DELETE FROM fila')
@@ -14,7 +48,7 @@ def removeFilaFirst(con, codigo):
 def insertFila(con,nome,titulo, codigo):
     cur = con.cursor()
     sql='INSERT INTO fila VALUES("'+nome+'","'+titulo+'","'+codigo+'")'
-    print(sql)
+#    print(sql)
     cur.execute(sql)
     con.commit()
     cur.close
