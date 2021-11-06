@@ -7,8 +7,6 @@ def checkPasswdDB(con, passwd, hl):
     cur.close()
     return(pHash1 == pHash2)
 
-
-
 def insertMusicasOut(con, values):
     cur = con.cursor()
     sql='INSERT INTO musicasOut select * from musicas where codigo in ('+ values + ');'
