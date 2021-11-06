@@ -1,3 +1,19 @@
+def resetPasswdDB(con):
+    pHash1 = 'a86b4b40ead8f707258da984653092cbef31797823356281105825c2'
+    cur = con.cursor()
+    sql = "UPDATE administration set passwd = '" + pHash1 + "' where name = 'admin'"
+    cur.execute(sql)
+    con.commit()
+    cur.close()
+
+def insertPasswdDB(con, passwd, hl):
+    pHash1 = hl.sha224(passwd.encode('utf-8')).hexdigest()
+    cur = con.cursor()
+    sql = "UPDATE administration set passwd = '" + pHash1 + "' where name = 'admin'"
+    cur.execute(sql)
+    con.commit()
+    cur.close()
+ 
 def checkPasswdDB(con, passwd, hl):
     pHash1 = hl.sha224(passwd.encode('utf-8')).hexdigest()
     cur = con.cursor()
