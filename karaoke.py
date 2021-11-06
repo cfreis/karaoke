@@ -67,6 +67,7 @@ def checkPasswd(con):
             return(True)
         else:
             sg.Popup('Opps!', 'Senha Incorreta!', font=("Helvetica",18), keep_on_top=True)
+            del passwdTimer
             return(False)
 
 
@@ -911,10 +912,10 @@ def main():
         event1, values1 = windowConsulta.read(timeout=5000)
         #print(event1)
         if event1 in (None, 'exit'):
-            if not checkPasswd(con):
-                continue
             ret=sg.popup_yes_no('Você está prestes a encerrar esta aplicação!\n\nDeseja continuar?\n',title='Sair',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
             if ret == 'Yes':
+                if not checkPasswd(con):
+                    continue
                 process = subprocess.Popen("pkill mplayer; sleep 2" , shell=True, stdout=subprocess.PIPE)
                 process.wait()
                 break

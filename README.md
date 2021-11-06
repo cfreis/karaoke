@@ -5,6 +5,10 @@ O presente projeto visa criar uma interface para controle e execução de vídeo
 
 Realize o download, entre no diretório criado e execute ./karaoke.py. 
 
+## Senha
+
+A senha inicial para as ferramentas de configuração é _karaokeAdmin_
+
 ## Dependências
 
 São utilizadas as seguintes bibliotecas do python 3.0 ou superior:
