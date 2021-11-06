@@ -602,6 +602,7 @@ def main():
         elif event1 == 'trash': 
             if not checkPasswd(con):
                 continue
+
             nome=values1['nome']
             titulo=values1['titulo']
             cantor=values1['cantor']
