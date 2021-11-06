@@ -9,7 +9,7 @@ Realize o download, entre no diretório criado e execute ./karaoke.py.
 
 São utilizadas as seguintes bibliotecas do python 3.0 ou superior:
 
-PySimpleGUI, icons, sqlite3, subprocess, dbFunctions, os, shutil, vlc, sys, pytube, hashlib e time
+PySimpleGUI, sqlite3, subprocess, os, shutil, vlc, sys, pytube, hashlib e time
 
 ## Aviso Legal
 
