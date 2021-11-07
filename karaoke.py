@@ -598,7 +598,7 @@ def updateWindow2(window, txt1, player):
 def pInicializa():
     data=[]
     data2=[]
-    con = sqlite3.connect('./karaoke.db')
+    con = sqlite3.connect('/var/www/html/karaoke/karaoke.db')
     #db.removeFila(con)
     data1 = db.select(con,'','')
     dataFila = db.selectFila(con)
