@@ -13,7 +13,7 @@ A senha inicial para as ferramentas de configuração é _karaokeAdmin_
 
 São utilizadas as seguintes bibliotecas do python 3.0 ou superior:
 
-PySimpleGUI, sqlite3, subprocess, os, shutil, vlc, sys, pytube, hashlib e time
+FreeSimpleGUI, sqlite3, subprocess, os, shutil, vlc, sys, pytube, hashlib e time
 
 ## Aviso Legal
 
