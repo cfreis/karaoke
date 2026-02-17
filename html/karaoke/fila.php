@@ -19,6 +19,7 @@ $cantor = $_POST["cantor"];
 <html>
 <head>
     <title>Karaoke - by Clovis Reis</title>
+    <meta name="viewport" content="width=device-width">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <link href="./quiz.css" rel="stylesheet" type="text/css">

@@ -19,6 +19,7 @@ $cantor = $_POST["cantor"];
 <html>
 <head>
     <title>Karaoke - by Clovis Reis</title>
+    <meta name="viewport" content="width=device-width">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <link href="./quiz.css" rel="stylesheet" type="text/css">
@@ -59,8 +60,9 @@ $cantor = $_POST["cantor"];
             <td><br></td>
             </tr>
             <tr>
+                <td width="20%" align="center"><input type="button" class="but" name="cancel" value="Cancelar" onclick="cancela()" >
                 <td width="20%" align="center"><input type="submit" class="but" name="submit" value="Procurar"></td>
-                <td width="20%" align="center"><input type="button" class="but" name="cancel" value="Cancelar" onclick="cancela()" ></td>
+            </td>
 
             </tr>
         </table>

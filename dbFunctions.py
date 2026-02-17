@@ -52,9 +52,9 @@ def removeFila(con):
     con.commit()
     cur.close()
     
-def removeFilaFirst(con, codigo):
+def removeFilaFirst(con, codigo, cantor):
     cur = con.cursor()
-    sql = 'DELETE FROM fila WHERE codigo = "'+codigo+'";'
+    sql = 'DELETE FROM fila WHERE codigo = "'+codigo+'" AND nome = "'+cantor+'";'
     cur.execute(sql)
     con.commit()
     cur.close()

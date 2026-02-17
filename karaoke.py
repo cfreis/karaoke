@@ -11,9 +11,13 @@
     
 """
 
+#  conda install -c conda-forge ffmpeg
+#  sudo dnf install gstreamer1-plugins-{bad-\*,good-\*,base} gstreamer1-plugin-openh264 gstreamer1-libav --exclude=gstreamer1-plugins-bad-free-devel
+#  sudo dnf install lame\* --exclude=lame-devel
+#  sudo dnf group upgrade --with-optional Multimedia
 
-
-import PySimpleGUI as sg
+import socket   
+import FreeSimpleGUI as sg
 import icons
 import sqlite3
 import subprocess
@@ -27,6 +31,24 @@ from sys import platform as PLATFORM
 from pytube import YouTube
 import hashlib as hl
 import time
+import qrcode
+
+hostname=socket.gethostname()   
+IPAddr=socket.gethostbyname(hostname)   
+catalogo = 'Catálogo em http://'+IPAddr+'/karaoke (QRCode)'
+catalogo2 = 'http://'+IPAddr+'/karaoke'
+img = qrcode.make(catalogo2)
+img.save("catalogo.png")
+atuDB = 0
+if PLATFORM.startswith('linux'):
+    karaokeDB = '/var/www/html/karaoke/karaoke.db'
+else:
+    karaokeDB = 'C:\\WWebserver with PHP 5.4.45\\www\\karaoke\\karaoke.db'
+
+
+inst = None
+list_player = None
+media_list = None
 
 
 class eTimer(object):
@@ -129,10 +151,12 @@ def dwYTube(url):
     else:
         sh.rmtree(path)
         os.makedirs(path)
-    
+    print(url)
     yt = YouTube(url)
-    yt = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
-    yt.download(path)
+    print(yt.title)
+    stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+    print(stream)
+    stream.download(path)
     file = os.listdir(path)[0]
     print(file)
     os.rename(path+'/'+file, path+'/tmp.mp4')
@@ -236,7 +260,7 @@ def make_window1(theme,data,dataFila,nome,titulo,cantor):
     location = (0,0)
     size =(800,600)
     
-    return sg.Window('Karaokê - by Clovis F Reis', layout, right_click_menu=right_click_menu_def)
+    return sg.Window('Karaokê - by Clovis F Reis', layout, right_click_menu=right_click_menu_def,resizable=True)
 
 def make_admin(theme):
     
@@ -396,8 +420,7 @@ def tocaProxima(data):
         
 def nextSinger(theme):
     sg.theme('BlueMono')
-    layout= [[sg.Image('', size=(300, 170), key='-VID_OUT-'),
-            sg.Button('',
+    colBtn = [[sg.Button('',
                 button_color=(sg.theme_background_color(),sg.theme_background_color()),
                 disabled_button_color=(sg.theme_background_color(),sg.theme_background_color()), 
                 disabled=False, 
@@ -426,7 +449,18 @@ def nextSinger(theme):
                 pad=(0,100),
                 image_data=icons.button_cancel, 
                 key='break')],
-        [sg.Text('Fila vazia! Aguardando o próximo intérprete.                                                        ', font=("Helvetica",20), key = 'txt1')]]
+        [sg.Image(source = 'rede2.png',subsample = 4)],
+        [sg.Text('1. Conecte-se',font=("Helvetica",10), key = 'txt2')],
+        [sg.Text('rede: Karaoke',font=("Helvetica",10), key = 'txt3')],
+        [sg.Text('(sem internet)',font=("Helvetica",10), key = 'txt4')],
+        [sg.Text('senha: karaoke123\n\n\n\n\n\n\n',font=("Helvetica",10), key = 'txt5')],
+        [sg.Image(source = 'catalogo.png',subsample = 4)],
+        [sg.Text('2. Acesse',font=("Helvetica",10), key = 'txt6')]]
+
+    
+    layout= [[sg.Image('', size=(300, 170), key='-VID_OUT-'),
+              sg.Column(colBtn, element_justification='c' )],
+        [sg.Text('Fila vazia! Aguardando o próximo intérprete. '+catalogo, font=("Helvetica",20), key = 'txt1')]]
             
     #layout=[[col1,sg.Column(col2)],[sg.Text('Fila vazia! Aguardando o próximo intérprete.', font=("Helvetica",20), key = 'txt1')]]
 
@@ -516,7 +550,7 @@ def make_windowAll(theme,data,dataFila,nome,titulo,cantor):
 
     sg.theme('BlueMono')
     colM2= [[sg.Image('', size=(300, 170), key='-VID_OUT-')],
-        [sg.Text('Fila vazia! Aguardando o próximo intérprete.                                                        ', font=("Helvetica",20), key = 'txt1')]]
+        [sg.Text('Fila vazia! Aguardando o próximo intérprete. '+ catalogo, font=("Helvetica",20), key = 'txt1')]]
             
     #layout=[[col1,sg.Column(col2)],[sg.Text('Fila vazia! Aguardando o próximo intérprete.', font=("Helvetica",20), key = 'txt1')]]
 
@@ -571,11 +605,14 @@ def make_windowAll(theme,data,dataFila,nome,titulo,cantor):
     return sg.Window('Karaokê - by Clovis F Reis', layout, element_justification='center', finalize=True, resizable=True,force_toplevel = True).Finalize()
 
 def mpSetup(window):
+    global inst, list_player, media_list
     window['-VID_OUT-'].expand(True, True)                # type: sg.Element
     #------------ Media Player Setup ---------#
 
-    inst = vlc.Instance("--no-xlib --play-and-stop --no-loop --no-repeat")
-    list_player = inst.media_list_player_new()
+    if inst is None:
+        inst = vlc.Instance("--play-and-stop --no-loop --no-repeat")
+        #inst = vlc.Instance("--no-xlib --play-and-stop --no-loop --no-repeat")
+        list_player = inst.media_list_player_new()
     media_list = inst.media_list_new([])
     list_player.set_media_list(media_list)
     player = list_player.get_media_player()
@@ -598,14 +635,14 @@ def updateWindow2(window, txt1, player):
 def pInicializa():
     data=[]
     data2=[]
-    con = sqlite3.connect('/var/www/html/karaoke/karaoke.db')
+    con = sqlite3.connect(karaokeDB)
     #db.removeFila(con)
     data1 = db.select(con,'','')
     dataFila = db.selectFila(con)
     sg.SetOptions(window_location = (683,384))
     
     #seleciona quantidade de monitores
-    twoMonit = sg.popup_yes_no('Você deseja utilizar dois monitore?\n',title='Seleção de monitores',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
+    twoMonit = sg.popup_yes_no('Você deseja utilizar dois monitores?\n',title='Seleção de monitores',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
     if twoMonit == 'Yes':
         windowConsulta = make_window1(sg.theme(),data1,dataFila,'','','')
         windowControle = nextSinger(sg.theme())
@@ -641,12 +678,12 @@ def pTimeOut(con, windowConsulta, values1):
                 pass
 
 def pAdd(con, windowConsulta, values1):
-    #print("[LOG] Clicked Add!")
+    print("[LOG] Clicked Add!")
     if values1['tabela'] == [] or values1['nome'] == '':
         sg.Popup('Opps!', 'Digite seu nome e selecione uma música!', font=("Helvetica",18), keep_on_top=True)
     else:
         selected_row = values1['tabela'][0]
-        linha=windowConsulta.find_element('tabela').get()[selected_row]
+        linha=windowConsulta['tabela'].Values[selected_row]
         titulo=linha[2]
         codigo=linha[1]
         nome=values1['nome']
@@ -668,10 +705,11 @@ def pCancel(con, windowConsulta, values1):
     titulo=values1['titulo']
     cantor=values1['cantor']
     fila=values1['fila'][0]
-    cantor, titulo, codigo = windowConsulta.find_element('fila').get()[fila]
+    selected_row = values1['fila'][0]
+    cantor, titulo, codigo = windowConsulta['fila'].Values[selected_row]
     ret=sg.popup_yes_no('Deseja remover a música '+titulo+ '\nde ' + cantor + ' da fila?',title='Confirmar exclusão',font=("Helvetica",18),modal = True, keep_on_top=True)#,custom_text=['Sim','Não'])
     if ret == 'Yes':
-        db.removeFilaFirst(con,codigo)
+        db.removeFilaFirst(con,codigo,cantor)
         if fila == 0:
             process = subprocess.Popen("pkill mplayer; sleep 2" , shell=True, stdout=subprocess.PIPE)
             process.wait()
@@ -774,7 +812,7 @@ def pNew(con, windowConsulta, values1):
                 elif not os.path.isfile(arquivoNew):
                     sg.Popup('Opps!', 'O arquivo selecionado não existe!', font=("Helvetica",18), keep_on_top=True)
                 codigoNew = db.getNextCodigo(con)
-                #print(tituloNew,cantorNew,arquivoNew,codigoNew, letraNew, idiomaNew)
+                print(tituloNew,cantorNew,arquivoNew,codigoNew, letraNew, idiomaNew)
                 erro = db.insertMusica(con, cantorNew, codigoNew, tituloNew, letraNew, idiomaNew)
                 try: 
                     sh.move(arquivoNew, "./Musicas/"+str(codigoNew)+".mp4")
@@ -787,6 +825,7 @@ def pNew(con, windowConsulta, values1):
                 break
         windowNew.close()
         updateWindow1(windowConsulta, con, nome, titulo, cantor)
+        atuDB = 1
                 
 def pControle(con,windowControle, event2, values2, player, media_list, list_player, getNext, showNext, first):
     data2 = db.select1Fila(con)
@@ -794,7 +833,7 @@ def pControle(con,windowControle, event2, values2, player, media_list, list_play
     if data2 != []:
         if showNext or first:
             cantor2, titulo2, codigo2 = data2[0]
-            txt1 = 'Próximo intérprete: '+cantor2 + ', cantando '+ titulo2
+            txt1 = 'Próximo intérprete: '+cantor2 + ', cantando '+ titulo2+'. '+catalogo
             updateWindow2(windowControle, txt1, player)
             event2, values2 = windowControle.read(timeout=1000)
             #print(values)
@@ -805,14 +844,15 @@ def pControle(con,windowControle, event2, values2, player, media_list, list_play
         #windowControle.close()
         if not player.is_playing():
             player, media_list, list_player = mpSetup(windowControle)
+            cantor2 = data2[0][0]
             codigo2 = data2[0][2]
             media_list.add_media("./Musicas/"+codigo2+".mp4")
             list_player.play()
-            db.removeFilaFirst(con, codigo2)
+            db.removeFilaFirst(con, codigo2,cantor2)
             getNext = True
             showNext = True
     else:
-        txt1 = 'Fila vazia! Aguardando o próximo intérprete.'
+        txt1 = 'Fila vazia! Aguardando o próximo intérprete. '+catalogo
         updateWindow2(windowControle, txt1, player)
         getNext = True
     
@@ -954,6 +994,8 @@ def main():
     windowControle.close()
     if twoMonit == 'Yes':
         windowConsulta.close()
+    if atuDB == 0:
+        sh.copyfile(karaokeDB, './bkpDB.db')
     exit(0)
 
 if __name__ == '__main__':
